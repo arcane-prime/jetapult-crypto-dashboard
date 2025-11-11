@@ -7,5 +7,5 @@ await startServer();
 
 
 
-await refreshCryptoCurrencies();
-await refreshCryptoHistoricData();
+// await refreshCryptoCurrencies();
+// await refreshCryptoHistoricData();
