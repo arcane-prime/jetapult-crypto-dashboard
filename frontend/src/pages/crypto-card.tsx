@@ -46,7 +46,7 @@ export default function CryptoCard({ crypto }: CryptoCardProps) {
                 crypto.price_change_24h >= 0 ? 'text-green-600' : 'text-red-600'
               }`}
             >
-              {crypto.price_change_24h.toFixed(2)}%
+              {crypto.price_change_24h.toFixed(2)}
             </dd>
           </div>
         </div>

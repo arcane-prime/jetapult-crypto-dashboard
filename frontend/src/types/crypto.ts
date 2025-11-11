@@ -29,3 +29,10 @@ export interface CryptoSummary {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface CryptoHistoricData {
+  id: string;
+  prices: [number, number][];
+  market_caps: [number, number][];
+  total_volumes: [number, number][];
+}

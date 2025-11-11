@@ -3,6 +3,8 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 import { getTopNCryptosFromDB, getCryptoHistoricDataFromDB } from './providers/db-provider.js';
+import { getClosingPricesMarketCapFromDB } from './providers/db-provider.js';
+
 dotenv.config();
 
 
@@ -35,6 +37,18 @@ export async function createServer() {
             res.json(cryptoHistoricData);
         } catch (err) {
             console.error('Error getting crypto historic data:', err);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    });
+
+    app.get('/crypto/closing-prices-market-cap', async (req, res) => { 
+        try {
+            const paramsObject = req.query;
+            const id = paramsObject.id as string;
+            const closingPricesMarketCap = await getClosingPricesMarketCapFromDB(id);
+            res.json(closingPricesMarketCap);
+        } catch (err) {
+            console.error('Error getting closing prices and market cap:', err);
             res.status(500).json({ error: 'Internal server error' });
         }
     });
