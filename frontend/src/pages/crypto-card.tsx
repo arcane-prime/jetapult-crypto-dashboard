@@ -10,43 +10,39 @@ export default function CryptoCard({ crypto }: CryptoCardProps) {
     <Link
       to={`/crypto/${crypto.id}`}
       state={{ crypto }}
-      className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white rounded-2xl"
+      className="group block focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 rounded-3xl"
       aria-label={`View details for ${crypto.name}`}
     >
-      <div className="bg-white rounded-2xl p-8 shadow-xl flex flex-col gap-6 transition-transform duration-150 ease-in-out hover:-translate-y-2 hover:shadow-2xl">
+      <div className="rounded-3xl border border-gray-800 bg-gray-900/70 p-8 shadow-lg shadow-gray-900/40 backdrop-blur transition duration-200 ease-out group-hover:-translate-y-2 group-hover:border-indigo-500/60 group-hover:shadow-indigo-900/40">
         <div className="flex items-center gap-6">
           <img
             src={crypto.image}
             alt={crypto.name}
-            className="w-16 h-16 rounded-full p-2"
-            style={{
-              background:
-                'linear-gradient(135deg, rgba(79,70,229,0.15), rgba(59,130,246,0.15))',
-            }}
+            className="h-16 w-16 rounded-full border border-indigo-500/40 bg-gray-950 p-3 transition group-hover:border-indigo-400 group-hover:shadow-[0_0_25px_rgba(99,102,241,0.25)]"
           />
           <div>
-            <h3 className="m-0 text-xl font-semibold text-gray-800">{crypto.name}</h3>
-            <p className="mt-1 text-sm uppercase tracking-wider text-gray-500">
+            <h3 className="m-0 text-xl font-semibold text-white">{crypto.name}</h3>
+            <p className="mt-1 text-xs uppercase tracking-[0.45em] text-indigo-200">
               {crypto.symbol}
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="mt-6 grid grid-cols-2 gap-6">
           <div>
-            <dt className="text-sm uppercase tracking-widest text-gray-400">Price</dt>
-            <dd className="mt-1 text-lg font-semibold text-gray-800">
+            <dt className="text-xs uppercase tracking-widest text-gray-400">Price</dt>
+            <dd className="mt-1 text-lg font-semibold text-white">
               ${crypto.current_price.toLocaleString()}
             </dd>
           </div>
           <div>
-            <dt className="text-sm uppercase tracking-widest text-gray-400">Change</dt>
+            <dt className="text-xs uppercase tracking-widest text-gray-400">24h Change</dt>
             <dd
               className={`mt-1 text-lg font-semibold ${
-                crypto.price_change_24h >= 0 ? 'text-green-600' : 'text-red-600'
+                crypto.price_change_percentage_24h >= 0 ? 'text-emerald-400' : 'text-rose-400'
               }`}
             >
-              {crypto.price_change_24h.toFixed(2)}
+              {crypto.price_change_percentage_24h.toFixed(2)}%
             </dd>
           </div>
         </div>
