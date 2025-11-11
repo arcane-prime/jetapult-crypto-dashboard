@@ -1,5 +1,5 @@
-import { CryptoCurrency, CryptoObject } from "../types/crypto-object.js";
-import { CryptoCurrencyHistoricData, CryptoHistoricData } from "../types/crypto-historic-data.js";
+import { CryptoCurrency, CryptoObject } from "../models/crypto-object.js";
+import { CryptoCurrencyHistoricData, CryptoHistoricData } from "../models/crypto-historic-data.js";
 
 export async function updateCryptoCurrencies(
     cryptoData: CryptoObject[]
@@ -41,16 +41,6 @@ export async function updateCryptoHistoricData(
         }
     } catch (err) {
         console.error("Error updating crypto historic data:", err);
-        throw err;
-    }
-}
-
-export async function getCryptoIds() { 
-    try { 
-        const cryptoIds = await CryptoCurrency.find({}, { id: 1 });
-        return cryptoIds.map((crypto) => crypto.id);
-    } catch (err) {
-        console.error("Error getting crypto ids:", err);
         throw err;
     }
 }
