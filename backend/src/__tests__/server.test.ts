@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import request from 'supertest';
-import { startServer } from '../server.js';
+import { createServer } from '../server.js';
 
 describe('Server API Tests', () => {
   let app: any;
 
   beforeEach(async () => {
-    app = await startServer();
+    app = await createServer();
   });
 
   describe('GET /ping', () => {

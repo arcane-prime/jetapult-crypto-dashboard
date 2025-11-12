@@ -1,23 +1,23 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import type { CryptoSummary } from '../types/crypto';
-import { useTopCryptos } from '../hooks/useTopCryptos';
-import { useCryptoHistoricData } from '../hooks/useCryptoHistoricData';
-import { useAuth } from '../hooks/useAuth';
-import { useFavorites } from '../hooks/useFavorites';
-import { useSorting } from '../hooks/useSorting';
-import { DetailHeader } from './components/detail-header';
-import { getTokenFromStorage } from '../services/auth-service';
+import { useTopCryptos } from '../hooks/use-top-cryptos';
+import { useCryptoHistoricData } from '../hooks/use-crypto-historic-data';
+import { useAuth } from '../hooks/use-auth';
+import { useFavorites } from '../hooks/use-favorites';
+import { useSorting } from '../hooks/use-sorting';
+import { DetailHeader } from '../components/dashboard/detail-header';
+import { getTokenFromStorage } from '../services/auth.service';
 
 // Lazy load heavy components
 const DetailMetrics = lazy(() =>
-  import('./components/detail-metrics').then((module) => ({ default: module.DetailMetrics })),
+  import('../components/dashboard/detail-metrics').then((module) => ({ default: module.DetailMetrics })),
 );
 const DetailCharts = lazy(() =>
-  import('./components/detail-charts').then((module) => ({ default: module.DetailCharts })),
+  import('../components/dashboard/detail-charts').then((module) => ({ default: module.DetailCharts })),
 );
 const DetailRecentSnapshots = lazy(() =>
-  import('./components/detail-recent-snapshots').then((module) => ({
+  import('../components/dashboard/detail-recent-snapshots').then((module) => ({
     default: module.DetailRecentSnapshots,
   })),
 );

@@ -1,4 +1,4 @@
-import { useAuthSuccess } from '../../hooks/useAuthSuccess';
+import { useAuthSuccess } from '../../hooks/use-auth-success';
 
 export default function AuthSuccessPage() {
     useAuthSuccess();

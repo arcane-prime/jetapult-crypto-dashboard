@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Snapshot } from '../../hooks/useCryptoHistoricData';
+import type { Snapshot } from '../../hooks/use-crypto-historic-data';
 
 interface DetailRecentSnapshotsProps {
   snapshots: Snapshot[];

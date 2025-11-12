@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '../context/user-context';
-import { getTokenFromStorage } from '../services/auth-service';
-import { addFavorite, removeFavorite } from '../services/favorites-service';
+import { getTokenFromStorage } from '../services/auth.service';
+import { addFavorite, removeFavorite } from '../services/favorites.service';
 
 export function useFavorites() {
   const { user, setUser } = useUser();

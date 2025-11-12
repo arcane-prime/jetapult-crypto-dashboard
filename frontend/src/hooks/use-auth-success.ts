@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../context/user-context';
-import { getTokenFromURL, saveTokenToStorage, fetchUserData, cleanTokenFromURL } from '../services/auth-service';
+import { getTokenFromURL, saveTokenToStorage, fetchUserData, cleanTokenFromURL } from '../services/auth.service';
 
 export function useAuthSuccess() {
   const { setUser } = useUser();

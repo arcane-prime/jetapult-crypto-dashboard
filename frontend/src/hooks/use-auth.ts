@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useUser } from '../context/user-context';
-import { fetchUserData, getTokenFromStorage, getTokenFromURL, saveTokenToStorage, cleanTokenFromURL } from '../services/auth-service';
-import type { User } from '../types/user';
+import { fetchUserData, getTokenFromStorage, getTokenFromURL, saveTokenToStorage, cleanTokenFromURL } from '../services/auth.service';
 
 export function useAuth() {
   const { user, setUser } = useUser();

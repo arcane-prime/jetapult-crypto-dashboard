@@ -3,11 +3,13 @@ import passport from 'passport';
 import type { VerifyCallback } from 'passport-google-oauth20';
 import { UserModel } from '../schema/user.schema.js';
 
-passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID || '',
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-    callbackURL: `${process.env.BACKEND_URL || 'http://localhost:4000'}/auth/google/callback`,
-}, async (accessToken, refreshToken, profile, done: VerifyCallback) => {
+// Only initialize GoogleStrategy if credentials are provided
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  passport.use(new GoogleStrategy({
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: `${process.env.BACKEND_URL || 'http://localhost:4000'}/auth/google/callback`,
+  }, async (accessToken, refreshToken, profile, done: VerifyCallback) => {
     try { 
         let user = await UserModel.findOne({ id: profile.id });
         
@@ -39,4 +41,5 @@ passport.use(new GoogleStrategy({
     } catch(err) { 
         return done(err);
     }
-}));
+  }));
+}
