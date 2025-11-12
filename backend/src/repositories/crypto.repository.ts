@@ -55,6 +55,21 @@ export async function getCryptoIdFromName(id: string) {
     }
 }
 
+// Fetch only specific fields based on query type
+export async function getCryptoFields(id: string, fields: string[]) {
+    try {
+        const projection: Record<string, number> = { _id: 0 };
+        fields.forEach(field => {
+            projection[field] = 1;
+        });
+        const crypto = await CryptoCurrency.findOne({ id }, projection);
+        return crypto ? crypto.toObject() : null;
+    } catch (err) {
+        console.error("Error getting crypto fields:", err);
+        throw err;
+    }
+}
+
 export async function updateCryptoCurrencies(
     cryptoData: CryptoObject[]
 ) {

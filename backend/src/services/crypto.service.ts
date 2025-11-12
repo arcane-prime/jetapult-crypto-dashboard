@@ -99,7 +99,7 @@ function extractDaysFromQuery(query: string): number {
 }
 
 function findCryptoIdInQuery(query: string, cryptoIds: string[]): string | null {
-    const words = query.toLowerCase().split(' ');
+    const words = query.toLowerCase().split(/\s+/);
     const cryptoIdsLower = new Set(cryptoIds.map(id => id.toLowerCase()));
     const foundId = words.find(word => cryptoIdsLower.has(word));
     return foundId || null;
@@ -111,11 +111,12 @@ export async function searchQueryFromDB(query: string) {
             return [];
         }
         query = query.replace(/\?$/, '');
-        const cachedCryptoObject = await getCachedData(getCacheKeySearchQuery(query));
-        if (cachedCryptoObject) {
+        const cachedResult = await getCachedData(getCacheKeySearchQuery(query));
+        if (cachedResult) {
             console.log("Cached hit search query for query = " + query);
-            return cachedCryptoObject;
+            return cachedResult;
         }
+
         const queryLower = query.toLowerCase();
         const cryptoIds = await getCryptoIdsFromDB();
         const cryptoId = findCryptoIdInQuery(query, cryptoIds);
@@ -124,18 +125,26 @@ export async function searchQueryFromDB(query: string) {
             return [];
         }
 
-        if (queryLower.includes('price of')) {
-            const cryptoObject = await getCryptoIdFromName(cryptoId);
-            await setCachedData(getCacheKeySearchQuery(query), cryptoObject);
-            return cryptoObject ? cryptoObject : [];
+        // Check if query is about historic data/trends
+        const isTrendQuery = queryLower.match(/(\d+\s*)?day\s*trend|trend|chart|graph|history/i);
+        
+        if (isTrendQuery) {
+            // Return historic data for the specified days
+            const days = extractDaysFromQuery(query);
+            const historicData = await getClosingPricesMarketCapFromDB(cryptoId, days);
+            if (historicData) {
+                await setCachedData(getCacheKeySearchQuery(query), historicData);
+                return historicData;
+            }
+            return [];
         }
 
-        if (queryLower.includes('day trend of')) {
-
-            const days = extractDaysFromQuery(query);
-            const cryptoObject = await getClosingPricesMarketCapFromDB(cryptoId, days);
+        // For all other queries (price, market_cap, volume, 24h change, etc.)
+        // Return the entire crypto object - it has everything needed
+        const cryptoObject = await getCryptoIdFromName(cryptoId);
+        if (cryptoObject) {
             await setCachedData(getCacheKeySearchQuery(query), cryptoObject);
-            return cryptoObject ? cryptoObject : [];
+            return cryptoObject;
         }
 
         return [];
