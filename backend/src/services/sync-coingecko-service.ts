@@ -1,5 +1,5 @@
-import { CryptoCurrency, CryptoObject } from "../models/crypto-object.js";
-import { CryptoCurrencyHistoricData, CryptoHistoricData } from "../models/crypto-historic-data.js";
+import { CryptoCurrency, CryptoObject } from "../models/crypto-schema.js";
+import { CryptoCurrencyHistoricData, CryptoHistoricData } from "../models/crypto-historic-data-schema.js";
 
 export async function updateCryptoCurrencies(
     cryptoData: CryptoObject[]

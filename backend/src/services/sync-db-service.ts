@@ -1,7 +1,7 @@
-import { CryptoCurrency } from "../models/crypto-object.js";
-import { CryptoCurrencyHistoricData } from "../models/crypto-historic-data.js";
-import { CryptoObject } from "../models/crypto-object.js";
-import { CryptoHistoricData } from "../models/crypto-historic-data.js";
+import { CryptoCurrency } from "../models/crypto-schema.js";
+import { CryptoCurrencyHistoricData } from "../models/crypto-historic-data-schema.js";
+import { CryptoObject } from "../models/crypto-schema.js";
+import { CryptoHistoricData } from "../models/crypto-historic-data-schema.js";
 
 export async function getCryptoIds() {
     try {

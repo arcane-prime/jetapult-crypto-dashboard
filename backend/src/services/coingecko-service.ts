@@ -1,5 +1,5 @@
-import type { CryptoObject } from "../models/crypto-object.js";
-import type { CryptoHistoricData } from "../models/crypto-historic-data.js";
+import type { CryptoObject } from "../models/crypto-schema.js";
+import type { CryptoHistoricData } from "../models/crypto-historic-data-schema.js";
 
 
 const baseUrl = process.env.BASE_URL || 'https://api.coingecko.com/api/v3';

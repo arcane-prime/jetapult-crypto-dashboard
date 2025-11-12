@@ -2,6 +2,8 @@ import './App.css';
 import { lazy, Suspense } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import Dashboard from './pages/dashboard';
+import LoginPage from './pages/auth/login';
+import AuthSuccessPage from './pages/auth/auth-success';
 
 // Lazy load chat page since it's a separate route
 const ChatPage = lazy(() => import('./pages/chat'));
@@ -9,7 +11,10 @@ const ChatPage = lazy(() => import('./pages/chat'));
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Dashboard />} />
+      <Route path="/" element={<LoginPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/auth-success" element={<AuthSuccessPage />} />
+      <Route path="/dashboard" element={<Dashboard />} />
       <Route
         path="/chat"
         element={

@@ -1,6 +1,6 @@
 import { fetchTopNCryptosFromCoinGecko, fetchCryptoHistoricDataFromCoinGecko } from "../services/coingecko-service.js";
 import { updateCryptoCurrencies, updateCryptoHistoricData } from "../services/sync-coingecko-service.js";
-import { CryptoHistoricData } from "../models/crypto-historic-data.js";
+import { CryptoHistoricData } from "../models/crypto-historic-data-schema.js";
 import { getCryptoIds } from "../services/sync-db-service.js";
 
 export async function refreshCryptoCurrencies() {

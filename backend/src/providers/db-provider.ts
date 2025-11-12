@@ -1,4 +1,4 @@
-import { CryptoObject } from "../models/crypto-object.js";
+import { CryptoObject } from "../models/crypto-schema.js";
 import { getCryptoIds, getTopNCryptos, getCryptoHistoricData, getCryptoIdFromName } from "../services/sync-db-service.js";
 import { getCachedData, setCachedData, getCacheKeyTopNCryptos, getCacheKeyCryptoIds, getCacheKeyCryptoHistoricData, getCacheKeySearchQuery } from "../cache/redis-client.js";
 

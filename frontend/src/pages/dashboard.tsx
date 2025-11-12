@@ -29,6 +29,22 @@ export default function Dashboard() {
   const [sortField, setSortField] = useState<SortField>('market_cap_rank');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
+  // Remove token from URL if present
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('token')) {
+      const token = urlParams.get('token');
+      if (token) {
+        // Store token if not already stored
+        if (!localStorage.getItem('token')) {
+          localStorage.setItem('token', token);
+        }
+        // Clean URL
+        window.history.replaceState({}, '', '/dashboard');
+      }
+    }
+  }, []);
+
   // Sort cryptos based on selected field and direction
   const sortedCryptos = useMemo(() => {
     const sorted = [...cryptos];
