@@ -2,8 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
-import { getTopNCryptosFromDB, getCryptoHistoricDataFromDB } from './providers/db-provider.js';
-import { getClosingPricesMarketCapFromDB } from './providers/db-provider.js';
+import { getTopNCryptosFromDB, getCryptoHistoricDataFromDB, searchQueryFromDB, getClosingPricesMarketCapFromDB } from './providers/db-provider.js';
 
 dotenv.config();
 
@@ -45,10 +44,24 @@ export async function createServer() {
         try {
             const paramsObject = req.query;
             const id = paramsObject.id as string;
-            const closingPricesMarketCap = await getClosingPricesMarketCapFromDB(id);
+            const days = paramsObject.days ? parseInt(paramsObject.days as string) : 30;
+            const closingPricesMarketCap = await getClosingPricesMarketCapFromDB(id, days);
             res.json(closingPricesMarketCap);
         } catch (err) {
             console.error('Error getting closing prices and market cap:', err);
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    });
+
+    app.get('/crypto/search', async (req, res) => {
+        try {
+            const paramsObject = req.query;
+            const query = paramsObject.query as string;
+            console.log('query', query);
+            const searchResult = await searchQueryFromDB(query);
+            res.json(searchResult);
+        } catch (err) {
+            console.error('Error searching crypto currencies:', err);
             res.status(500).json({ error: 'Internal server error' });
         }
     });

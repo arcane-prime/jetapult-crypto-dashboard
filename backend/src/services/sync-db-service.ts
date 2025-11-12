@@ -44,3 +44,13 @@ export async function getCryptoHistoricData(id: string) {
         throw err;
     }
 }
+
+export async function getCryptoIdFromName(id: string) {
+    try {
+        const cryptoId = await CryptoCurrency.findOne({ id: id});
+        return cryptoId ? cryptoId : null;
+    } catch (err) {
+        console.error("Error getting crypto id from name:", err);
+        throw err;
+    }
+}

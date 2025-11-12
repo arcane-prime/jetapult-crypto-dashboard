@@ -20,7 +20,7 @@ export async function refreshCryptoHistoricData(
         } else {
             console.error(`Failed to fetch crypto historic data for ${id}.`);
         }
-        await sleep(5000); 
+        await sleep(10000); 
     }
 }
 
