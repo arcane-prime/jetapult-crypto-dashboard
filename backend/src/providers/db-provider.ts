@@ -1,9 +1,16 @@
 import { CryptoObject } from "../models/crypto-object.js";
 import { getCryptoIds, getTopNCryptos, getCryptoHistoricData, getCryptoIdFromName } from "../services/sync-db-service.js";
+import { getCachedData, setCachedData, getCacheKeyTopNCryptos, getCacheKeyCryptoIds, getCacheKeyCryptoHistoricData, getCacheKeySearchQuery } from "../cache/redis-client.js";
 
 export async function getCryptoIdsFromDB() {
     try {
+        const cachedCryptoIds = await getCachedData(getCacheKeyCryptoIds());
+        if (cachedCryptoIds) {
+            console.log("Cached hit crypto ids");
+            return cachedCryptoIds;
+        }
         const cryptoIds = await getCryptoIds();
+        await setCachedData(getCacheKeyCryptoIds(), cryptoIds);
         return cryptoIds;
     } catch (err) {
         console.error('Error fetching crypto ids:', err);
@@ -13,7 +20,13 @@ export async function getCryptoIdsFromDB() {
 
 export async function getTopNCryptosFromDB(n: number): Promise<CryptoObject[]> {
     try {
+        const cachedCryptoCurrencies = await getCachedData(getCacheKeyTopNCryptos(n));
+        if (cachedCryptoCurrencies) {
+            console.log("Cached hit top cryptos for n = " + n);
+            return cachedCryptoCurrencies;
+        }
         const cryptoCurrencies = await getTopNCryptos(n);
+        await setCachedData(getCacheKeyTopNCryptos(n), cryptoCurrencies);
         return cryptoCurrencies;
     } catch (err) {
         console.error('Error getting top n crypto currencies:', err);
@@ -23,7 +36,13 @@ export async function getTopNCryptosFromDB(n: number): Promise<CryptoObject[]> {
 
 export async function getCryptoHistoricDataFromDB(id: string) {
     try {
+        const cachedCryptoHistoricData = await getCachedData(getCacheKeyCryptoHistoricData(id));
+        if (cachedCryptoHistoricData) {
+            console.log("Cached hit crypto historic data for id = " + id);
+            return cachedCryptoHistoricData;
+        }
         const cryptoHistoricData = await getCryptoHistoricData(id);
+        await setCachedData(getCacheKeyCryptoHistoricData(id), cryptoHistoricData);
         return cryptoHistoricData;
     } catch (err) {
         console.error('Error getting crypto historic data:', err);
@@ -34,8 +53,8 @@ export async function getCryptoHistoricDataFromDB(id: string) {
 export async function getClosingPricesMarketCapFromDB(id: string, days: number = 30) {
     try {
         const validDays = Math.max(1, Math.min(30, Math.floor(days)));
-        
-        const cryptoHistoricData = await getCryptoHistoricData(id);
+
+        const cryptoHistoricData = await getCryptoHistoricDataFromDB(id);
         if (!cryptoHistoricData) {
             return null;
         }
@@ -76,7 +95,7 @@ function extractDaysFromQuery(query: string): number {
             return extractedDays;
         }
     }
-    return 30; 
+    return 30;
 }
 
 function findCryptoIdInQuery(query: string, cryptoIds: string[]): string | null {
@@ -91,7 +110,11 @@ export async function searchQueryFromDB(query: string) {
         if (!query || !query.trim()) {
             return [];
         }
-
+        const cachedCryptoObject = await getCachedData(getCacheKeySearchQuery(query));
+        if (cachedCryptoObject) {
+            console.log("Cached hit search query for query = " + query);
+            return cachedCryptoObject;
+        }
         const queryLower = query.toLowerCase();
         const cryptoIds = await getCryptoIdsFromDB();
         const cryptoId = findCryptoIdInQuery(query, cryptoIds);
@@ -102,12 +125,15 @@ export async function searchQueryFromDB(query: string) {
 
         if (queryLower.includes('price of')) {
             const cryptoObject = await getCryptoIdFromName(cryptoId);
+            await setCachedData(getCacheKeySearchQuery(query), cryptoObject);
             return cryptoObject ? cryptoObject : [];
         }
 
         if (queryLower.includes('day trend of')) {
+
             const days = extractDaysFromQuery(query);
             const cryptoObject = await getClosingPricesMarketCapFromDB(cryptoId, days);
+            await setCachedData(getCacheKeySearchQuery(query), cryptoObject);
             return cryptoObject ? cryptoObject : [];
         }
 

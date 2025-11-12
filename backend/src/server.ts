@@ -19,7 +19,11 @@ export async function createServer() {
     app.get('/crypto/top', async (req, res) => { 
         try {
             const paramsObject = req.query;
+        
             const topN = parseInt(paramsObject.topN as string) ?? 10;
+            if(topN < 1 || topN > 10) {
+                return res.status(400).json({ error: 'Top N must be between 1 and 10' });
+            }
             const cryptoCurrencies = await getTopNCryptosFromDB(topN);
             res.json(cryptoCurrencies);
         } catch (err) {
@@ -57,7 +61,6 @@ export async function createServer() {
         try {
             const paramsObject = req.query;
             const query = paramsObject.query as string;
-            console.log('query', query);
             const searchResult = await searchQueryFromDB(query);
             res.json(searchResult);
         } catch (err) {
