@@ -1,9 +1,9 @@
 import express from 'express';
 import passport from 'passport';
 import jwt from 'jsonwebtoken';
-import { User } from '../models/user-schema.js';
+import { User } from '../schema/user.schema.js';
 import { authMiddleware } from '../middleware/is-authenticated.js';
-import { getUserFromDB, addFavoriteCryptoToDB, removeFavoriteCryptoFromDB } from '../providers/auth-provider.js';
+import { getUserFromDB, addFavoriteCryptoToDB, removeFavoriteCryptoFromDB } from '../services/auth.service.js';
 
 const router = express.Router();
 
@@ -88,3 +88,4 @@ router.delete('/favorites/:cryptoId', authMiddleware, async (req, res) => {
 });
 
 export default router;
+

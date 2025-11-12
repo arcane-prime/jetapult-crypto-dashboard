@@ -1,5 +1,5 @@
-import { CryptoObject } from "../models/crypto-schema.js";
-import { getCryptoIds, getTopNCryptos, getCryptoHistoricData, getCryptoIdFromName } from "../services/sync-db-service.js";
+import { CryptoObject } from "../schema/crypto.schema.js";
+import { getCryptoIds, getTopNCryptos, getCryptoHistoricData, getCryptoIdFromName } from "../repositories/crypto.repository.js";
 import { getCachedData, setCachedData, getCacheKeyTopNCryptos, getCacheKeyCryptoIds, getCacheKeyCryptoHistoricData, getCacheKeySearchQuery } from "../cache/redis-client.js";
 
 export async function getCryptoIdsFromDB() {
@@ -110,6 +110,7 @@ export async function searchQueryFromDB(query: string) {
         if (!query || !query.trim()) {
             return [];
         }
+        query = query.replace(/\?$/, '');
         const cachedCryptoObject = await getCachedData(getCacheKeySearchQuery(query));
         if (cachedCryptoObject) {
             console.log("Cached hit search query for query = " + query);
@@ -143,4 +144,3 @@ export async function searchQueryFromDB(query: string) {
         return [];
     }
 }
-

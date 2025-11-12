@@ -1,6 +1,6 @@
 import { connectDB } from "./helpers/connect-db.js";
 import { startServer } from "./server.js";
-import { refreshCryptoCurrencies, refreshCryptoHistoricData } from "./providers/coingecko-provider.js";
+import { refreshCryptoCurrencies, refreshCryptoHistoricData } from "./services/coingecko.service.js";
 import cron from "node-cron";
 
 await connectDB();

@@ -1,4 +1,4 @@
-import { User, UserModel } from '../models/user-schema.js';
+import { User, UserModel } from '../schema/user.schema.js';
 
 export async function getUserById(id: string): Promise<User | null> {
     try {
@@ -41,7 +41,6 @@ export async function removeFavoriteCrypto(userId: string, cryptoId: string): Pr
             throw new Error('User not found');
         }
 
-        // Remove cryptoId from favorites
         if (user.favoriteCryptos) {
             user.favoriteCryptos = user.favoriteCryptos.filter(id => id !== cryptoId);
             user.updatedAt = new Date();

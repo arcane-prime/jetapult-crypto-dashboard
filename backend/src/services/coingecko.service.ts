@@ -1,7 +1,7 @@
-import { fetchTopNCryptosFromCoinGecko, fetchCryptoHistoricDataFromCoinGecko } from "../services/coingecko-service.js";
-import { updateCryptoCurrencies, updateCryptoHistoricData } from "../services/sync-coingecko-service.js";
-import { CryptoHistoricData } from "../models/crypto-historic-data-schema.js";
-import { getCryptoIds } from "../services/sync-db-service.js";
+import { fetchTopNCryptosFromCoinGecko, fetchCryptoHistoricDataFromCoinGecko } from "../repositories/coingecko.repository.js";
+import { updateCryptoCurrencies, updateCryptoHistoricData } from "../repositories/crypto.repository.js";
+import { CryptoHistoricData } from "../schema/crypto-historic-data.schema.js";
+import { getCryptoIds } from "../repositories/crypto.repository.js";
 
 export async function refreshCryptoCurrencies() {
     const cryptoData = await fetchTopNCryptosFromCoinGecko(10);
@@ -9,8 +9,7 @@ export async function refreshCryptoCurrencies() {
     console.log(`Updated ${cryptoData.length} crypto currencies successfully.`);
 }
 
-export async function refreshCryptoHistoricData(
-) {
+export async function refreshCryptoHistoricData() {
     const cryptoIds = await getCryptoIds();
     for(const id of cryptoIds) {
         const cryptoHistoricData: CryptoHistoricData | null = await fetchCryptoHistoricDataFromCoinGecko(id);
@@ -27,5 +26,3 @@ export async function refreshCryptoHistoricData(
 function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
-
-

@@ -1,7 +1,7 @@
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import passport from 'passport';
 import type { VerifyCallback } from 'passport-google-oauth20';
-import { UserModel } from '../models/user-schema.js';
+import { UserModel } from '../schema/user.schema.js';
 
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID || '',

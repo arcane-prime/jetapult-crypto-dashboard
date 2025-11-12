@@ -1,5 +1,5 @@
-import { User } from '../models/user-schema.js';
-import { getUserById, addFavoriteCrypto, removeFavoriteCrypto } from '../services/auth-service.js';
+import { User } from '../schema/user.schema.js';
+import { getUserById, addFavoriteCrypto, removeFavoriteCrypto } from '../repositories/auth.repository.js';
 
 export async function getUserFromDB(userId: string): Promise<User | null> {
     try {
@@ -30,4 +30,3 @@ export async function removeFavoriteCryptoFromDB(userId: string, cryptoId: strin
         throw err;
     }
 }
-

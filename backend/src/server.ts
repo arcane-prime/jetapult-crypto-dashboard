@@ -3,7 +3,7 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 import passport from 'passport';
-import routes from './routes/index.js';
+import routes from './controllers/index.js';
 import './config/passport.js'; // Import passport config to register strategies
 
 dotenv.config();

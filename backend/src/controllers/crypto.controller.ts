@@ -4,11 +4,10 @@ import {
   getCryptoHistoricDataFromDB, 
   searchQueryFromDB, 
   getClosingPricesMarketCapFromDB 
-} from '../providers/db-provider.js';
+} from '../services/crypto.service.js';
 
 const router = express.Router();
 
-// GET /crypto/top
 router.get('/top', async (req, res) => {
   try {
     const topN = parseInt(req.query.topN as string) || 10;
@@ -23,7 +22,6 @@ router.get('/top', async (req, res) => {
   }
 });
 
-// GET /crypto/historic
 router.get('/historic', async (req, res) => {
   try {
     const id = req.query.id as string;
@@ -35,7 +33,6 @@ router.get('/historic', async (req, res) => {
   }
 });
 
-// GET /crypto/closing-prices-market-cap
 router.get('/closing-prices-market-cap', async (req, res) => {
   try {
     const id = req.query.id as string;
@@ -48,7 +45,6 @@ router.get('/closing-prices-market-cap', async (req, res) => {
   }
 });
 
-// GET /crypto/search
 router.get('/search', async (req, res) => {
   try {
     const query = req.query.query as string;

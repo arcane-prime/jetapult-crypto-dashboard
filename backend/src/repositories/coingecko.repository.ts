@@ -1,5 +1,5 @@
-import type { CryptoObject } from "../models/crypto-schema.js";
-import type { CryptoHistoricData } from "../models/crypto-historic-data-schema.js";
+import type { CryptoObject } from "../schema/crypto.schema.js";
+import type { CryptoHistoricData } from "../schema/crypto-historic-data.schema.js";
 
 
 const baseUrl = process.env.BASE_URL || 'https://api.coingecko.com/api/v3';
@@ -48,3 +48,4 @@ export async function fetchCryptoHistoricDataFromCoinGecko(id: string) {
         return null;
     }
 }
+
