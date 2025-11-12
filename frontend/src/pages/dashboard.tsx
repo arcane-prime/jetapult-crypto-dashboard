@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy, Suspense, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import type { CryptoSummary } from '../types/crypto';
 import { useTopCryptos } from '../hooks/useTopCryptos';
@@ -20,9 +20,50 @@ const DetailRecentSnapshots = lazy(() =>
 
 const TOP_N = 10;
 
+type SortField = 'market_cap_rank' | 'market_cap' | 'current_price' | 'price_change_percentage_24h';
+type SortDirection = 'asc' | 'desc';
+
 export default function Dashboard() {
   const { cryptos, isLoading, error, retry } = useTopCryptos(TOP_N);
   const [selectedCrypto, setSelectedCrypto] = useState<CryptoSummary | null>(null);
+  const [sortField, setSortField] = useState<SortField>('market_cap_rank');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  // Sort cryptos based on selected field and direction
+  const sortedCryptos = useMemo(() => {
+    const sorted = [...cryptos];
+    sorted.sort((a, b) => {
+      let aValue: number;
+      let bValue: number;
+
+      switch (sortField) {
+        case 'market_cap_rank':
+          aValue = a.market_cap_rank;
+          bValue = b.market_cap_rank;
+          break;
+        case 'market_cap':
+          aValue = a.market_cap;
+          bValue = b.market_cap;
+          break;
+        case 'current_price':
+          aValue = a.current_price;
+          bValue = b.current_price;
+          break;
+        case 'price_change_percentage_24h':
+          aValue = a.price_change_percentage_24h;
+          bValue = b.price_change_percentage_24h;
+          break;
+        default:
+          return 0;
+      }
+
+      return sortDirection === 'asc'
+        ? aValue - bValue
+        : bValue - aValue;
+    });
+
+    return sorted;
+  }, [cryptos, sortField, sortDirection]);
 
   // Set first crypto as selected by default when cryptos load
   useEffect(() => {
@@ -30,6 +71,22 @@ export default function Dashboard() {
       setSelectedCrypto(cryptos[0]);
     }
   }, [cryptos, selectedCrypto]);
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      // Toggle direction if clicking the same field
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Set new field with appropriate default direction
+      // Market cap should default to descending (highest first)
+      // Rank should default to ascending (lower rank = better)
+      // Price and 24h% default to descending (highest first)
+      const defaultDirection: SortDirection = 
+        field === 'market_cap_rank' ? 'asc' : 'desc';
+      setSortField(field);
+      setSortDirection(defaultDirection);
+    }
+  };
 
   const {
     historicData,
@@ -85,7 +142,54 @@ export default function Dashboard() {
           {/* Crypto Table - Left Side */}
           <div className="lg:col-span-1 flex">
             <div className="flex flex-col w-full rounded-3xl border border-gray-700 bg-gray-900/60 p-4 shadow-2xl shadow-gray-900/30 backdrop-blur">
-              <h2 className="mb-4 text-lg font-semibold text-indigo-200">Top {TOP_N} Cryptocurrencies</h2>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-indigo-200">Top {TOP_N} Cryptocurrencies</h2>
+              </div>
+              
+              {/* Sort Buttons */}
+              <div className="mb-3 flex flex-wrap gap-2">
+                <button
+                  onClick={() => handleSort('market_cap_rank')}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                    sortField === 'market_cap_rank'
+                      ? 'bg-indigo-600 text-white'
+                      : 'border border-gray-700 bg-gray-800/50 text-gray-300 hover:bg-gray-800'
+                  }`}
+                >
+                  Rank {sortField === 'market_cap_rank' && (sortDirection === 'asc' ? '↑' : '↓')}
+                </button>
+                <button
+                  onClick={() => handleSort('market_cap')}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                    sortField === 'market_cap'
+                      ? 'bg-indigo-600 text-white'
+                      : 'border border-gray-700 bg-gray-800/50 text-gray-300 hover:bg-gray-800'
+                  }`}
+                >
+                  Market Cap {sortField === 'market_cap' && (sortDirection === 'asc' ? '↑' : '↓')}
+                </button>
+                <button
+                  onClick={() => handleSort('current_price')}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                    sortField === 'current_price'
+                      ? 'bg-indigo-600 text-white'
+                      : 'border border-gray-700 bg-gray-800/50 text-gray-300 hover:bg-gray-800'
+                  }`}
+                >
+                  Price {sortField === 'current_price' && (sortDirection === 'asc' ? '↑' : '↓')}
+                </button>
+                <button
+                  onClick={() => handleSort('price_change_percentage_24h')}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                    sortField === 'price_change_percentage_24h'
+                      ? 'bg-indigo-600 text-white'
+                      : 'border border-gray-700 bg-gray-800/50 text-gray-300 hover:bg-gray-800'
+                  }`}
+                >
+                  24h % {sortField === 'price_change_percentage_24h' && (sortDirection === 'asc' ? '↑' : '↓')}
+                </button>
+              </div>
+
               <div className="flex-1 overflow-y-auto scrollbar-hide">
                 <table className="w-full">
                   <thead className="sticky top-0 bg-gray-900/95 backdrop-blur-sm">
@@ -108,7 +212,7 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {cryptos.map((crypto) => {
+                    {sortedCryptos.map((crypto) => {
                       const isSelected = selectedCrypto?.id === crypto.id;
                       const isPositive = crypto.price_change_percentage_24h >= 0;
                       
