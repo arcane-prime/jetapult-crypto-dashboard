@@ -9,6 +9,7 @@ export interface User {
     updatedAt: Date;
     isLoggedIn: boolean;
     isVerified: boolean;
+    favoriteCryptos?: string[]; // Array of crypto IDs
 }
 
 
@@ -19,6 +20,7 @@ export const userSchema = new Schema({
     avatar: { type: String, required: false },
     isLoggedIn: { type: Boolean, default: false },
     isVerified: { type: Boolean, default: false },
+    favoriteCryptos: { type: [String], default: [] },
     createdAt: { type: Date, required: true },
     updatedAt: { type: Date, required: true },
 });

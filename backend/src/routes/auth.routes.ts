@@ -1,12 +1,13 @@
 import express from 'express';
 import passport from 'passport';
 import jwt from 'jsonwebtoken';
-import { User, UserModel } from '../models/user-schema.js';
+import { User } from '../models/user-schema.js';
 import { authMiddleware } from '../middleware/is-authenticated.js';
+import { getUserFromDB, addFavoriteCryptoToDB, removeFavoriteCryptoFromDB } from '../providers/auth-provider.js';
 
 const router = express.Router();
 
-// Step 1 redirec to google auth
+// Step 1 redirect to google auth
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 // Step 2 google auth callback
@@ -32,6 +33,7 @@ router.get('/google/callback', passport.authenticate('google', { failureRedirect
     }
 });
 
+// GET /auth/me
 router.get('/me', authMiddleware, async (req, res) => {
     try { 
         const decoded = req.user as { id: string; email: string };
@@ -39,15 +41,56 @@ router.get('/me', authMiddleware, async (req, res) => {
             return res.status(401).json({ message: 'Unauthorized' });
         }
         
-        // Fetch full user from database
-        const user = await UserModel.findOne({ id: decoded.id });
+        const user = await getUserFromDB(decoded.id);
         if(!user) { 
             return res.status(404).json({ message: 'User not found' });
         }
         
         res.json({success: true, user});
     } catch(err) { 
-        console.error('Error in me route', err);
+        console.error('Error getting user:', err);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+// POST /auth/favorites
+router.post('/favorites', authMiddleware, async (req, res) => {
+    try {
+        const decoded = req.user as { id: string; email: string };
+        if(!decoded || !decoded.id) { 
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        const { cryptoId } = req.body;
+        if (!cryptoId || typeof cryptoId !== 'string') {
+            return res.status(400).json({ message: 'cryptoId is required' });
+        }
+
+        const favoriteCryptos = await addFavoriteCryptoToDB(decoded.id, cryptoId);
+        res.json({ success: true, favoriteCryptos });
+    } catch(err) {
+        console.error('Error adding favorite:', err);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+// DELETE /auth/favorites/:cryptoId
+router.delete('/favorites/:cryptoId', authMiddleware, async (req, res) => {
+    try {
+        const decoded = req.user as { id: string; email: string };
+        if(!decoded || !decoded.id) { 
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+
+        const { cryptoId } = req.params;
+        if (!cryptoId) {
+            return res.status(400).json({ message: 'cryptoId is required' });
+        }
+
+        const favoriteCryptos = await removeFavoriteCryptoFromDB(decoded.id, cryptoId);
+        res.json({ success: true, favoriteCryptos });
+    } catch(err) {
+        console.error('Error removing favorite:', err);
         res.status(500).json({ message: 'Internal server error' });
     }
 });

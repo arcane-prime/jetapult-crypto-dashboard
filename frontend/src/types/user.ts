@@ -7,4 +7,5 @@ export interface User {
     updatedAt: string;
     isLoggedIn: boolean;
     isVerified: boolean;
+    favoriteCryptos?: string[]; // Array of crypto IDs
 }
