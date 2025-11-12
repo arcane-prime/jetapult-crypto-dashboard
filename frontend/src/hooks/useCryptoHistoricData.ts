@@ -13,6 +13,8 @@ interface UseCryptoHistoricDataResult {
   isLoading: boolean;
   error: string | null;
   dailySnapshots: Snapshot[];
+  priceSeries30Days: [number, number][];
+  marketCapSeries30Days: [number, number][];
 }
 
 export function useCryptoHistoricData(id?: string | null): UseCryptoHistoricDataResult {
@@ -20,6 +22,8 @@ export function useCryptoHistoricData(id?: string | null): UseCryptoHistoricData
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [dailySnapshots, setDailySnapshots] = useState<Snapshot[]>([]);
+  const [priceSeries30Days, setPriceSeries30Days] = useState<[number, number][]>([]);
+  const [marketCapSeries30Days, setMarketCapSeries30Days] = useState<[number, number][]>([]);
 
   useEffect(() => {
     if (!id) {
@@ -27,6 +31,8 @@ export function useCryptoHistoricData(id?: string | null): UseCryptoHistoricData
       setIsLoading(false);
       setError('Missing crypto id.');
       setDailySnapshots([]);
+      setPriceSeries30Days([]);
+      setMarketCapSeries30Days([]);
       return;
     }
 
@@ -37,26 +43,81 @@ export function useCryptoHistoricData(id?: string | null): UseCryptoHistoricData
         setIsLoading(true);
         setError(null);
 
-        const response = await fetch(
+        // Fetch 30 days of closing prices and market caps
+        const closingPricesResponse = await fetch(
+          `${API_BASE_URL}/crypto/closing-prices-market-cap?id=${encodeURIComponent(id)}&days=30`,
+          { signal: controller.signal },
+        );
+
+        if (!closingPricesResponse.ok) {
+          throw new Error(`Request failed with status ${closingPricesResponse.status}`);
+        }
+
+        const closingData = await closingPricesResponse.json();
+        
+        if (!closingData || !closingData.prices || !closingData.market_caps) {
+          throw new Error('Invalid data format received');
+        }
+
+        // Convert date strings to timestamps for chart compatibility
+        const prices30Days: [number, number][] = closingData.prices.map((point: { date: string; value: number }) => [
+          new Date(point.date).getTime(),
+          point.value,
+        ]);
+
+        const marketCaps30Days: [number, number][] = closingData.market_caps.map(
+          (point: { date: string; value: number }) => [new Date(point.date).getTime(), point.value],
+        );
+
+        setPriceSeries30Days(prices30Days);
+        setMarketCapSeries30Days(marketCaps30Days);
+
+        // Build snapshots for the detail view
+        const snapshots: Snapshot[] = closingData.prices
+          .map((pricePoint: { date: string; value: number }) => {
+            const marketCapPoint = closingData.market_caps.find(
+              (mc: { date: string }) => mc.date === pricePoint.date,
+            );
+            return {
+              date: pricePoint.date,
+              price: pricePoint.value,
+              marketCap: marketCapPoint?.value ?? null,
+            };
+          })
+          .reverse(); // Most recent first
+
+        setDailySnapshots(snapshots);
+
+        // Also fetch raw historic data for metrics (if needed)
+        const rawHistoricResponse = await fetch(
           `${API_BASE_URL}/crypto/historic?id=${encodeURIComponent(id)}`,
           { signal: controller.signal },
         );
 
-        if (!response.ok) {
-          throw new Error(`Request failed with status ${response.status}`);
+        if (rawHistoricResponse.ok) {
+          const rawData: CryptoHistoricData = await rawHistoricResponse.json();
+          setHistoricData(rawData);
         }
 
-        const data: CryptoHistoricData = await response.json();
-        setHistoricData(data);
-        setDailySnapshots(buildDailySnapshots(data));
         setError(null);
       } catch (err) {
         if (err instanceof DOMException && err.name === 'AbortError') {
           return;
         }
-        const message = err instanceof Error ? err.message : 'Unknown error occurred';
+        let message = 'Failed to load historical data';
+        if (err instanceof Error) {
+          if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+            message = 'Network error: Unable to connect to the server.';
+          } else if (err.message.includes('status')) {
+            message = `Server error: ${err.message}`;
+          } else {
+            message = err.message;
+          }
+        }
         setError(message);
         setDailySnapshots([]);
+        setPriceSeries30Days([]);
+        setMarketCapSeries30Days([]);
       } finally {
         setIsLoading(false);
       }
@@ -72,33 +133,8 @@ export function useCryptoHistoricData(id?: string | null): UseCryptoHistoricData
     isLoading,
     error,
     dailySnapshots,
+    priceSeries30Days,
+    marketCapSeries30Days,
   };
-}
-
-function buildDailySnapshots(data: CryptoHistoricData): Snapshot[] {
-  const prices = mapLatestPerDay(data.prices);
-  const marketCaps = mapLatestPerDay(data.market_caps);
-
-  const allDates = Array.from(new Set<string>([...prices.keys(), ...marketCaps.keys()])).sort(
-    (a, b) => (a < b ? -1 : 1),
-  );
-
-  return allDates
-    .slice(-30)
-    .reverse()
-    .map((date) => ({
-      date,
-      price: prices.get(date) ?? null,
-      marketCap: marketCaps.get(date) ?? null,
-    }));
-}
-
-function mapLatestPerDay(points: [number, number][]): Map<string, number> {
-  const byDay = new Map<string, number>();
-  for (const [timestamp, value] of points) {
-    const dayKey = new Date(timestamp).toISOString().slice(0, 10);
-    byDay.set(dayKey, value);
-  }
-  return byDay;
 }
 

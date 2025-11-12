@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { CryptoHistoricData } from '../../../types/crypto';
+import type { CryptoHistoricData } from '../../types/crypto';
 
 type NumericPoint = [number, number];
 

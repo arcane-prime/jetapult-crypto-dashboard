@@ -40,17 +40,13 @@ interface LineChartProps {
 }
 
 function LineChart({ title, points, yLabel, gradientId, lineColor, areaColor }: LineChartProps) {
-  const MAX_POINTS = 80;
-
   const chartPoints = useMemo(() => {
     if (!points.length) {
       return [];
     }
 
-    const slice =
-      points.length > MAX_POINTS ? points.slice(points.length - MAX_POINTS) : points;
-
-    return slice.map(([timestamp, value]) => ({ timestamp, value }));
+    // Use all points (30 days) - no need to limit since we're fetching exactly 30 days
+    return points.map(([timestamp, value]) => ({ timestamp, value }));
   }, [points]);
 
   const chartMeta = useMemo(() => {

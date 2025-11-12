@@ -7,12 +7,19 @@ export interface UseTopCryptosResult {
   isLoading: boolean;
   error: string | null;
   apiBaseUrl: string;
+  retry: () => void;
 }
 
 export function useTopCryptos(topN: number): UseTopCryptosResult {
   const [cryptos, setCryptos] = useState<CryptoSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryTrigger, setRetryTrigger] = useState(0);
+
+  const retry = () => {
+    setError(null);
+    setRetryTrigger((prev) => prev + 1);
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -36,8 +43,16 @@ export function useTopCryptos(topN: number): UseTopCryptosResult {
         if (err instanceof DOMException && err.name === 'AbortError') {
           return;
         }
-        const message =
-          err instanceof Error ? err.message : 'Unknown error occurred';
+        let message = 'Failed to load cryptocurrencies';
+        if (err instanceof Error) {
+          if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+            message = 'Network error: Unable to connect to the server. Please check your connection.';
+          } else if (err.message.includes('status')) {
+            message = `Server error: ${err.message}`;
+          } else {
+            message = err.message;
+          }
+        }
         setError(message);
       } finally {
         setIsLoading(false);
@@ -47,13 +62,14 @@ export function useTopCryptos(topN: number): UseTopCryptosResult {
     fetchTopCryptos();
 
     return () => controller.abort();
-  }, [topN]);
+  }, [topN, retryTrigger]);
 
   return {
     cryptos,
     isLoading,
     error,
     apiBaseUrl: API_BASE_URL,
+    retry,
   };
 }
 

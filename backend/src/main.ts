@@ -7,11 +7,11 @@ await connectDB();
 await startServer();
 
 // Schedule to run every 2 hours (at minute 0 of every 2nd hour)
-// cron.schedule("0 */2 * * *", async () => {
-//   await refreshCryptoData();
-// });
+cron.schedule("0 */2 * * *", async () => {
+  await refreshCryptoData();
+});
 
-// await refreshCryptoData();
+await refreshCryptoData();
 
 
 async function refreshCryptoData() {

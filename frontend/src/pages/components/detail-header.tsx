@@ -1,4 +1,4 @@
-import type { CryptoSummary } from '../../../types/crypto';
+import type { CryptoSummary } from '../../types/crypto';
 
 interface DetailHeaderProps {
   crypto: CryptoSummary;

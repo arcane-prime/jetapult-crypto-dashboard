@@ -1,10 +1,16 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import type { FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useCryptoSearch } from '../../hooks/use-crypto-search';
 import type { CryptoSummary, CryptoTrendResponse, SearchResponse } from '../../types/crypto';
-import { PriceResponse } from './components/price-response';
-import { TrendResponse } from './components/trend-response';
+
+// Lazy load response components - they're only shown when there's a response
+const PriceResponse = lazy(() =>
+  import('./components/price-response').then((module) => ({ default: module.PriceResponse })),
+);
+const TrendResponse = lazy(() =>
+  import('./components/trend-response').then((module) => ({ default: module.TrendResponse })),
+);
 
 interface Message {
   id: string;
@@ -167,9 +173,10 @@ export default function ChatPage() {
                         )}
 
                         {message.error && (
-                          <p className="text-sm text-rose-400">
-                            Error: {message.error}. Please try again.
-                          </p>
+                          <div className="rounded-lg border border-rose-700 bg-rose-900/20 p-4">
+                            <p className="text-sm font-semibold text-rose-300 mb-1">Error</p>
+                            <p className="text-xs text-rose-200/80">{message.error}</p>
+                          </div>
                         )}
 
                         {!message.isLoading && !message.error && message.response === null && (
@@ -218,10 +225,26 @@ export default function ChatPage() {
                               {message.showDetails && (
                                 <div className="mt-4 border-t border-gray-700 pt-4">
                                   {isPriceResponse(message.response) && (
-                                    <PriceResponse data={message.response} />
+                                    <Suspense
+                                      fallback={
+                                        <div className="rounded-lg border border-gray-700 bg-gray-800/50 p-4 text-center text-sm text-gray-400">
+                                          Loading price details...
+                                        </div>
+                                      }
+                                    >
+                                      <PriceResponse data={message.response} />
+                                    </Suspense>
                                   )}
                                   {isTrendResponse(message.response) && (
-                                    <TrendResponse data={message.response} />
+                                    <Suspense
+                                      fallback={
+                                        <div className="rounded-lg border border-gray-700 bg-gray-800/50 p-4 text-center text-sm text-gray-400">
+                                          Loading trend details...
+                                        </div>
+                                      }
+                                    >
+                                      <TrendResponse data={message.response} />
+                                    </Suspense>
                                   )}
                                 </div>
                               )}

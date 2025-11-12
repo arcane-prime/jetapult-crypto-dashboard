@@ -1,25 +1,29 @@
 import './App.css';
+import { lazy, Suspense } from 'react';
 import { Route, Routes } from 'react-router-dom';
-import LandingPage from './pages/landing-page';
-import CryptoDetailPage from './pages/crypto/[id]';
-import ChatPage from './pages/chat';
-import { useTopCryptos } from './hooks/useTopCryptos';
+import Dashboard from './pages/dashboard';
 
-const TOP_N = 10;
+// Lazy load chat page since it's a separate route
+const ChatPage = lazy(() => import('./pages/chat'));
 
 function App() {
-  const { cryptos, isLoading, error } = useTopCryptos(TOP_N);
-
   return (
     <Routes>
+      <Route path="/" element={<Dashboard />} />
       <Route
-        path="/"
+        path="/chat"
         element={
-          <LandingPage cryptos={cryptos} isLoading={isLoading} error={error} />
+          <Suspense
+            fallback={
+              <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+                <p className="text-sm font-medium text-indigo-200">Loading chat...</p>
+              </div>
+            }
+          >
+            <ChatPage />
+          </Suspense>
         }
       />
-      <Route path="/crypto/:id" element={<CryptoDetailPage />} />
-      <Route path="/chat" element={<ChatPage />} />
     </Routes>
   );
 }

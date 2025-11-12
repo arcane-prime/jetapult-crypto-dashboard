@@ -33,7 +33,16 @@ export function useCryptoSearch(): UseCryptoSearchResult {
       const data = await res.json();
       setResponse(data);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error occurred';
+      let message = 'Failed to search';
+      if (err instanceof Error) {
+        if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+          message = 'Network error: Unable to connect to the server. Please check your connection.';
+        } else if (err.message.includes('status')) {
+          message = `Server error: ${err.message}`;
+        } else {
+          message = err.message;
+        }
+      }
       setError(message);
       setResponse(null);
     } finally {
