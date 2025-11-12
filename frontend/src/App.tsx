@@ -2,6 +2,7 @@ import './App.css';
 import { Route, Routes } from 'react-router-dom';
 import LandingPage from './pages/landing-page';
 import CryptoDetailPage from './pages/crypto/[id]';
+import ChatPage from './pages/chat';
 import { useTopCryptos } from './hooks/useTopCryptos';
 
 const TOP_N = 10;
@@ -18,6 +19,7 @@ function App() {
         }
       />
       <Route path="/crypto/:id" element={<CryptoDetailPage />} />
+      <Route path="/chat" element={<ChatPage />} />
     </Routes>
   );
 }

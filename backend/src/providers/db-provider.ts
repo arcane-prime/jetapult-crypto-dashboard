@@ -76,7 +76,7 @@ function extractDaysFromQuery(query: string): number {
             return extractedDays;
         }
     }
-    return 30; // default
+    return 30; 
 }
 
 function findCryptoIdInQuery(query: string, cryptoIds: string[]): string | null {
@@ -100,13 +100,11 @@ export async function searchQueryFromDB(query: string) {
             return [];
         }
 
-        // Handle "price of" queries
         if (queryLower.includes('price of')) {
             const cryptoObject = await getCryptoIdFromName(cryptoId);
             return cryptoObject ? cryptoObject : [];
         }
 
-        // Handle "day trend of" queries
         if (queryLower.includes('day trend of')) {
             const days = extractDaysFromQuery(query);
             const cryptoObject = await getClosingPricesMarketCapFromDB(cryptoId, days);

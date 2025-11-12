@@ -36,3 +36,16 @@ export interface CryptoHistoricData {
   market_caps: [number, number][];
   total_volumes: [number, number][];
 }
+
+export interface TrendDataPoint {
+  date: string;
+  value: number;
+}
+
+export interface CryptoTrendResponse {
+  id: string;
+  prices: TrendDataPoint[];
+  market_caps: TrendDataPoint[];
+}
+
+export type SearchResponse = CryptoSummary | CryptoTrendResponse | null;
