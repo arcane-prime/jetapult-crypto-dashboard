@@ -1,11 +1,13 @@
-import { useState, useEffect, lazy, Suspense, useMemo } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import type { CryptoSummary } from '../types/crypto';
 import { useTopCryptos } from '../hooks/useTopCryptos';
 import { useCryptoHistoricData } from '../hooks/useCryptoHistoricData';
+import { useAuth } from '../hooks/useAuth';
+import { useFavorites } from '../hooks/useFavorites';
+import { useSorting } from '../hooks/useSorting';
 import { DetailHeader } from './components/detail-header';
-import { useUser } from '../context/user-context';
-import { API_BASE_URL } from '../config/constants';
+import { getTokenFromStorage } from '../services/auth-service';
 
 // Lazy load heavy components
 const DetailMetrics = lazy(() =>
@@ -22,96 +24,12 @@ const DetailRecentSnapshots = lazy(() =>
 
 const TOP_N = 10;
 
-type SortField = 'market_cap_rank' | 'market_cap' | 'current_price' | 'price_change_percentage_24h';
-type SortDirection = 'asc' | 'desc';
-
 export default function Dashboard() {
   const { cryptos, isLoading, error, retry } = useTopCryptos(TOP_N);
-  const { user, setUser } = useUser();
+  useAuth(); // Initialize auth
+  const { toggleFavorite, isFavorite } = useFavorites();
+  const { sortedCryptos, sortField, sortDirection, handleSort } = useSorting(cryptos);
   const [selectedCrypto, setSelectedCrypto] = useState<CryptoSummary | null>(null);
-  const [sortField, setSortField] = useState<SortField>('market_cap_rank');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  const [favorites, setFavorites] = useState<string[]>([]);
-
-  // Remove token from URL if present and fetch user data
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('token')) {
-      const token = urlParams.get('token');
-      if (token) {
-        // Store token if not already stored
-        if (!localStorage.getItem('token')) {
-          localStorage.setItem('token', token);
-        }
-        // Clean URL
-        window.history.replaceState({}, '', '/dashboard');
-      }
-    }
-
-    // Fetch user data if logged in
-    const fetchUserData = async () => {
-      const token = localStorage.getItem('token');
-      if (token && !user) {
-        try {
-          const response = await fetch(`${API_BASE_URL}/auth/me`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-          if (response.ok) {
-            const data = await response.json();
-            if (data.success && data.user) {
-              setUser(data.user);
-              setFavorites(data.user.favoriteCryptos || []);
-            }
-          }
-        } catch (err) {
-          console.error('Error fetching user data:', err);
-        }
-      } else if (user) {
-        // Update favorites from user context
-        setFavorites(user.favoriteCryptos || []);
-      }
-    };
-
-    fetchUserData();
-  }, [user, setUser]);
-
-  // Sort cryptos based on selected field and direction
-  const sortedCryptos = useMemo(() => {
-    const sorted = [...cryptos];
-    sorted.sort((a, b) => {
-      let aValue: number;
-      let bValue: number;
-
-      switch (sortField) {
-        case 'market_cap_rank':
-          aValue = a.market_cap_rank;
-          bValue = b.market_cap_rank;
-          break;
-        case 'market_cap':
-          aValue = a.market_cap;
-          bValue = b.market_cap;
-          break;
-        case 'current_price':
-          aValue = a.current_price;
-          bValue = b.current_price;
-          break;
-        case 'price_change_percentage_24h':
-          aValue = a.price_change_percentage_24h;
-          bValue = b.price_change_percentage_24h;
-          break;
-        default:
-          return 0;
-      }
-
-      return sortDirection === 'asc'
-        ? aValue - bValue
-        : bValue - aValue;
-    });
-
-    return sorted;
-  }, [cryptos, sortField, sortDirection]);
 
   // Set first crypto as selected by default when cryptos load
   useEffect(() => {
@@ -120,65 +38,9 @@ export default function Dashboard() {
     }
   }, [cryptos, selectedCrypto]);
 
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      // Toggle direction if clicking the same field
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      // Set new field with appropriate default direction
-      // Market cap should default to descending (highest first)
-      // Rank should default to ascending (lower rank = better)
-      // Price and 24h% default to descending (highest first)
-      const defaultDirection: SortDirection = 
-        field === 'market_cap_rank' ? 'asc' : 'desc';
-      setSortField(field);
-      setSortDirection(defaultDirection);
-    }
-  };
-
-  const toggleFavorite = async (e: React.MouseEvent, cryptoId: string) => {
+  const handleFavoriteClick = (e: React.MouseEvent, cryptoId: string) => {
     e.stopPropagation(); // Prevent row click
-    
-    const token = localStorage.getItem('token');
-    if (!token) {
-      // User not logged in, can't favorite
-      return;
-    }
-
-    const isFavorite = favorites.includes(cryptoId);
-    
-    try {
-      const url = isFavorite 
-        ? `${API_BASE_URL}/auth/favorites/${cryptoId}`
-        : `${API_BASE_URL}/auth/favorites`;
-      
-      const options: RequestInit = {
-        method: isFavorite ? 'DELETE' : 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      };
-
-      if (!isFavorite) {
-        options.body = JSON.stringify({ cryptoId });
-      }
-
-      const response = await fetch(url, options);
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setFavorites(data.favoriteCryptos || []);
-          // Update user context
-          if (user) {
-            setUser({ ...user, favoriteCryptos: data.favoriteCryptos || [] });
-          }
-        }
-      }
-    } catch (err) {
-      console.error('Error toggling favorite:', err);
-    }
+    toggleFavorite(cryptoId);
   };
 
   const {
@@ -311,8 +173,8 @@ export default function Dashboard() {
                     {sortedCryptos.map((crypto) => {
                       const isSelected = selectedCrypto?.id === crypto.id;
                       const isPositive = crypto.price_change_percentage_24h >= 0;
-                      const isFavorite = favorites.includes(crypto.id);
-                      const token = localStorage.getItem('token');
+                      const cryptoIsFavorite = isFavorite(crypto.id);
+                      const token = getTokenFromStorage();
                       
                       return (
                         <tr
@@ -361,13 +223,13 @@ export default function Dashboard() {
                           <td className="px-3 py-3 text-center">
                             {token ? (
                               <button
-                                onClick={(e) => toggleFavorite(e, crypto.id)}
+                                onClick={(e) => handleFavoriteClick(e, crypto.id)}
                                 className={`transition-transform hover:scale-110 ${
-                                  isFavorite ? 'text-rose-500' : 'text-gray-500 hover:text-rose-400'
+                                  cryptoIsFavorite ? 'text-rose-500' : 'text-gray-500 hover:text-rose-400'
                                 }`}
-                                title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                                title={cryptoIsFavorite ? 'Remove from favorites' : 'Add to favorites'}
                               >
-                                {isFavorite ? '♥' : '♡'}
+                                {cryptoIsFavorite ? '♥' : '♡'}
                               </button>
                             ) : (
                               <span className="text-gray-600" title="Login to favorite">

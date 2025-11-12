@@ -17,12 +17,10 @@ export async function addFavoriteCrypto(userId: string, cryptoId: string): Promi
             throw new Error('User not found');
         }
 
-        // Initialize favoriteCryptos if not present
         if (!user.favoriteCryptos) {
             user.favoriteCryptos = [];
         }
 
-        // Add cryptoId to favorites if not already present
         if (!user.favoriteCryptos.includes(cryptoId)) {
             user.favoriteCryptos.push(cryptoId);
             user.updatedAt = new Date();

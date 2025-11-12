@@ -7,15 +7,11 @@ import { getUserFromDB, addFavoriteCryptoToDB, removeFavoriteCryptoFromDB } from
 
 const router = express.Router();
 
-// Step 1 redirect to google auth
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-// Step 2 google auth callback
 router.get('/google/callback', passport.authenticate('google', { failureRedirect: '/', session: false }), (req, res) => {
     try { 
         const user = req.user as User;
-        
-        // Check if JWT_SECRET is set
         const jwtSecret = process.env.JWT_SECRET;
         if (!jwtSecret) {
             console.error('JWT_SECRET is not set in environment variables');
@@ -26,14 +22,12 @@ router.get('/google/callback', passport.authenticate('google', { failureRedirect
         res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/auth-success?token=${token}`);
     } catch(err) { 
         console.error('Error in google auth callback', err);
-        // Check if response hasn't been sent yet before redirecting
         if (!res.headersSent) {
             res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
         }
     }
 });
 
-// GET /auth/me
 router.get('/me', authMiddleware, async (req, res) => {
     try { 
         const decoded = req.user as { id: string; email: string };
@@ -53,7 +47,6 @@ router.get('/me', authMiddleware, async (req, res) => {
     }
 });
 
-// POST /auth/favorites
 router.post('/favorites', authMiddleware, async (req, res) => {
     try {
         const decoded = req.user as { id: string; email: string };
@@ -74,7 +67,6 @@ router.post('/favorites', authMiddleware, async (req, res) => {
     }
 });
 
-// DELETE /auth/favorites/:cryptoId
 router.delete('/favorites/:cryptoId', authMiddleware, async (req, res) => {
     try {
         const decoded = req.user as { id: string; email: string };
