@@ -4,6 +4,10 @@ import authController from './auth.controller.js';
 
 const router = express.Router();
 
+router.get('/', (req, res) => {
+  res.send('Hello World');
+});
+
 router.get('/ping', (req, res) => {
   res.send('pong');
 });

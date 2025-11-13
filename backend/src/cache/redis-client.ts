@@ -5,14 +5,12 @@ const CACHE_TTL = process.env.CACHE_TTL ? parseInt(process.env.CACHE_TTL) : 60 *
 let redisEnabled = false;
 let redisClient: Redis | null = null;
 
-// Initialize Redis with graceful fallback
 try {
   const redisUrl = process.env.REDIS_URL;
   const redisHost = process.env.REDIS_HOST;
   const redisPort = process.env.REDIS_PORT;
-  const isRemoteRedis = !!redisUrl; // Store connection type for event handlers
+  const isRemoteRedis = !!redisUrl;
 
-  // Priority 1: Use REDIS_URL if provided (Upstash, Railway, etc.)
   if (redisUrl) {
     const isSSL = redisUrl.startsWith('rediss://');
     const hostMatch = redisUrl.match(/@([^:]+):/);
@@ -33,7 +31,6 @@ try {
       enableOfflineQueue: false,
     });
   }
-  // Priority 2: Try local Redis (default to localhost:6379 if not specified)
   else {
     const localHost = redisHost || "localhost";
     const localPort = parseInt(redisPort || "6379");
@@ -43,7 +40,6 @@ try {
     redisClient = new Redis({
       host: localHost,
       port: localPort,
-      // No password for local Redis - keep it simple
       retryStrategy: (times) => {
         if (times > 3) {
           console.warn('Local Redis connection failed. Falling back to database.');
@@ -54,14 +50,23 @@ try {
       },
       maxRetriesPerRequest: 1,
       enableOfflineQueue: false,
-      // Connect immediately to show connection status
+      lazyConnect: true, // Don't connect immediately - wait for first operation
+      showFriendlyErrorStack: false, // Reduce error spam
     });
   }
 
-  // Set up event handlers if Redis client was created
   if (redisClient) {
     redisClient.on('error', (error) => {
-      console.warn('Redis error:', error.message, '- Falling back to database.');
+      // Suppress unhandled error events - we handle them gracefully
+      if (!redisEnabled) {
+        // Only log if we haven't already disabled Redis
+        console.warn('Redis error:', error.message, '- Falling back to database.');
+      }
+      redisEnabled = false;
+    });
+    
+    // Handle unhandled error events to prevent console spam
+    redisClient.on('close', () => {
       redisEnabled = false;
     });
 

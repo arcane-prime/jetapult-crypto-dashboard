@@ -6,7 +6,7 @@ import { CryptoHistoricData } from "../schema/crypto-historic-data.schema.js";
 export async function getCryptoIds() {
     try {
         const cryptoIds = await CryptoCurrency.find({}, { id: 1 });
-        return cryptoIds.map((crypto) => crypto.id);
+        return cryptoIds.map((crypto: any) => crypto.id);
     } catch (err) {
         console.error("Error getting crypto ids:", err);
         throw err;
@@ -26,7 +26,7 @@ export async function hasCryptoData(): Promise<boolean> {
 export async function getTopNCryptos(n: number): Promise<CryptoObject[]> { 
     try {
         const cryptoCurrencies = await CryptoCurrency.find({}).sort({ market_cap: -1 }).limit(n);
-        return cryptoCurrencies.map((crypto) => ({
+        return cryptoCurrencies.map((crypto: any) => ({
             ...crypto.toObject(),
             roi: crypto.roi ? {
                 times: crypto.roi.times ?? 0,
