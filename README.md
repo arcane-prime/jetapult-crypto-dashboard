@@ -54,19 +54,31 @@ npm install
 ### Environment Variables
 
 **Backend** (`backend/.env`):
+
+**Required:**
 ```env
-PORT=4000
 MONGO_URI=mongodb://localhost:27017/cryptodb
 JWT_SECRET=your-secret-key-here
-REDIS_HOST=localhost
-REDIS_PORT=6379
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
+```
+
+**Optional (with defaults):**
+```env
+PORT=4000                                    # Default: 4000
+BACKEND_URL=http://localhost:4000          # Default: http://localhost:4000
+FRONTEND_URL=http://localhost:5173          # Default: http://localhost:5173
+REDIS_HOST=localhost                         # Optional - tries to connect, falls back to DB if connection fails or not set
+REDIS_PORT=6379                              # Optional - tries to connect, falls back to DB if connection fails or not set
+# OR use REDIS_URL for remote Redis (e.g., Upstash, Railway)
+# REDIS_URL=redis://localhost:6379
+GOOGLE_CLIENT_ID=your-google-client-id        # Optional - guest mode available
+GOOGLE_CLIENT_SECRET=your-google-client-secret # Optional - guest mode available
 ```
 
 **Frontend** (`frontend/.env`):
+
+**Optional (with default):**
 ```env
-VITE_API_BASE_URL=http://localhost:4000
+VITE_API_BASE_URL=http://localhost:4000     # Default: http://localhost:4000
 ```
 
 ### Running
