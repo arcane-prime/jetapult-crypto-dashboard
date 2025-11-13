@@ -13,6 +13,16 @@ export async function getCryptoIds() {
     }
 }
 
+export async function hasCryptoData(): Promise<boolean> {
+    try {
+        const count = await CryptoCurrency.countDocuments();
+        return count > 0;
+    } catch (err) {
+        console.error("Error checking crypto data:", err);
+        return false;
+    }
+}
+
 export async function getTopNCryptos(n: number): Promise<CryptoObject[]> { 
     try {
         const cryptoCurrencies = await CryptoCurrency.find({}).sort({ market_cap: -1 }).limit(n);

@@ -1,26 +1,8 @@
 import { connectDB } from "./helpers/connect-db.js";
 import { startServer } from "./server.js";
-import { refreshCryptoCurrencies, refreshCryptoHistoricData } from "./services/coingecko.service.js";
-import cron from "node-cron";
+import { initializeData, schedulePeriodicRefresh } from "./services/data-refresh.service.js";
 
 await connectDB();
+await initializeData();
 await startServer();
-
-// cron.schedule("0 */2 * * *", async () => {
-//   await refreshCryptoData();
-// });
-
-// await refreshCryptoData();
-
-
-// async function refreshCryptoData() {
-//     try {
-//       console.log("[Cron] Starting crypto data refresh...");
-//       await refreshCryptoCurrencies();
-//       await refreshCryptoHistoricData();
-//       console.log("[Cron] Crypto data refresh completed successfully");
-//     } catch (error) {
-//       console.error("[Cron] Error refreshing crypto data:", error);
-//     }
-//   }
-  
+schedulePeriodicRefresh();

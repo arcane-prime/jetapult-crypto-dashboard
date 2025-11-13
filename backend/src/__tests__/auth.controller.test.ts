@@ -4,8 +4,8 @@ import { createServer } from '../server.js';
 
 // Mock the cache module to prevent Redis connection attempts
 jest.mock('../cache/redis-client.js', () => ({
-  getCachedData: jest.fn().mockResolvedValue(null),
-  setCachedData: jest.fn().mockResolvedValue(undefined),
+  getCachedData: jest.fn<() => Promise<any>>().mockResolvedValue(null),
+  setCachedData: jest.fn<() => Promise<any>>().mockResolvedValue(undefined),
   getCacheKeyTopNCryptos: jest.fn((n: number) => `cryptoCurrencies_n_${n}`),
   getCacheKeyCryptoIds: jest.fn(() => 'cryptoIds'),
   getCacheKeyCryptoHistoricData: jest.fn((id: string) => `cryptoHistoricData_${id}`),
@@ -15,9 +15,9 @@ jest.mock('../cache/redis-client.js', () => ({
 
 // Mock the repository to prevent database connections
 jest.mock('../repositories/auth.repository.js', () => ({
-  getUserById: jest.fn().mockResolvedValue(null),
-  addFavoriteCrypto: jest.fn().mockResolvedValue([]),
-  removeFavoriteCrypto: jest.fn().mockResolvedValue([]),
+  getUserById: jest.fn<() => Promise<any>>().mockResolvedValue(null),
+  addFavoriteCrypto: jest.fn<() => Promise<any[]>>().mockResolvedValue([]),
+  removeFavoriteCrypto: jest.fn<() => Promise<any[]>>().mockResolvedValue([]),
 }));
 
 describe('Auth API Tests', () => {

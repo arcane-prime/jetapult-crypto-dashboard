@@ -125,11 +125,9 @@ export async function searchQueryFromDB(query: string) {
             return [];
         }
 
-        // Check if query is about historic data/trends
         const isTrendQuery = queryLower.match(/(\d+\s*)?day\s*trend|trend|chart|graph|history/i);
         
         if (isTrendQuery) {
-            // Return historic data for the specified days
             const days = extractDaysFromQuery(query);
             const historicData = await getClosingPricesMarketCapFromDB(cryptoId, days);
             if (historicData) {
@@ -139,8 +137,6 @@ export async function searchQueryFromDB(query: string) {
             return [];
         }
 
-        // For all other queries (price, market_cap, volume, 24h change, etc.)
-        // Return the entire crypto object - it has everything needed
         const cryptoObject = await getCryptoIdFromName(cryptoId);
         if (cryptoObject) {
             await setCachedData(getCacheKeySearchQuery(query), cryptoObject);

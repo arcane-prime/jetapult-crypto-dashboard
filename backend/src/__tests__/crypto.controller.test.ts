@@ -4,8 +4,8 @@ import { createServer } from '../server.js';
 
 // Mock the cache module to prevent Redis connection attempts
 jest.mock('../cache/redis-client.js', () => ({
-  getCachedData: jest.fn().mockResolvedValue(null),
-  setCachedData: jest.fn().mockResolvedValue(undefined),
+  getCachedData: jest.fn<() => Promise<any>>().mockResolvedValue(null),
+  setCachedData: jest.fn<() => Promise<any>>().mockResolvedValue(undefined),
   getCacheKeyTopNCryptos: jest.fn((n: number) => `cryptoCurrencies_n_${n}`),
   getCacheKeyCryptoIds: jest.fn(() => 'cryptoIds'),
   getCacheKeyCryptoHistoricData: jest.fn((id: string) => `cryptoHistoricData_${id}`),
@@ -15,10 +15,11 @@ jest.mock('../cache/redis-client.js', () => ({
 
 // Mock the repository to prevent database connections
 jest.mock('../repositories/crypto.repository.js', () => ({
-  getTopNCryptos: jest.fn().mockResolvedValue([]),
-  getCryptoIds: jest.fn().mockResolvedValue([]),
-  getCryptoHistoricData: jest.fn().mockResolvedValue(null),
-  getCryptoIdFromName: jest.fn().mockResolvedValue(null),
+  getTopNCryptos: jest.fn<() => Promise<any[]>>().mockResolvedValue([]),
+  getCryptoIds: jest.fn<() => Promise<any[]>>().mockResolvedValue([]),
+  getCryptoHistoricData: jest.fn<() => Promise<any>>().mockResolvedValue(null),
+  getCryptoIdFromName: jest.fn<() => Promise<any>>().mockResolvedValue(null),
+  hasCryptoData: jest.fn<() => Promise<boolean>>().mockResolvedValue(true),
 }));
 
 describe('Crypto API Tests', () => {
