@@ -1,5 +1,5 @@
-import { CryptoObject } from "../models/crypto-object.js";
-import { getCryptoIds, getTopNCryptos, getCryptoHistoricData, getCryptoIdFromName } from "../services/sync-db-service.js";
+import { CryptoObject } from "../schema/crypto.schema.js";
+import { getCryptoIds, getTopNCryptos, getCryptoHistoricData, getCryptoIdFromName } from "../repositories/crypto.repository.js";
 import { getCachedData, setCachedData, getCacheKeyTopNCryptos, getCacheKeyCryptoIds, getCacheKeyCryptoHistoricData, getCacheKeySearchQuery } from "../cache/redis-client.js";
 
 export async function getCryptoIdsFromDB() {
@@ -99,7 +99,7 @@ function extractDaysFromQuery(query: string): number {
 }
 
 function findCryptoIdInQuery(query: string, cryptoIds: string[]): string | null {
-    const words = query.toLowerCase().split(' ');
+    const words = query.toLowerCase().split(/\s+/);
     const cryptoIdsLower = new Set(cryptoIds.map(id => id.toLowerCase()));
     const foundId = words.find(word => cryptoIdsLower.has(word));
     return foundId || null;
@@ -110,11 +110,13 @@ export async function searchQueryFromDB(query: string) {
         if (!query || !query.trim()) {
             return [];
         }
-        const cachedCryptoObject = await getCachedData(getCacheKeySearchQuery(query));
-        if (cachedCryptoObject) {
+        query = query.replace(/\?$/, '');
+        const cachedResult = await getCachedData(getCacheKeySearchQuery(query));
+        if (cachedResult) {
             console.log("Cached hit search query for query = " + query);
-            return cachedCryptoObject;
+            return cachedResult;
         }
+
         const queryLower = query.toLowerCase();
         const cryptoIds = await getCryptoIdsFromDB();
         const cryptoId = findCryptoIdInQuery(query, cryptoIds);
@@ -123,18 +125,22 @@ export async function searchQueryFromDB(query: string) {
             return [];
         }
 
-        if (queryLower.includes('price of')) {
-            const cryptoObject = await getCryptoIdFromName(cryptoId);
-            await setCachedData(getCacheKeySearchQuery(query), cryptoObject);
-            return cryptoObject ? cryptoObject : [];
+        const isTrendQuery = queryLower.match(/(\d+\s*)?day\s*trend|trend|chart|graph|history/i);
+        
+        if (isTrendQuery) {
+            const days = extractDaysFromQuery(query);
+            const historicData = await getClosingPricesMarketCapFromDB(cryptoId, days);
+            if (historicData) {
+                await setCachedData(getCacheKeySearchQuery(query), historicData);
+                return historicData;
+            }
+            return [];
         }
 
-        if (queryLower.includes('day trend of')) {
-
-            const days = extractDaysFromQuery(query);
-            const cryptoObject = await getClosingPricesMarketCapFromDB(cryptoId, days);
+        const cryptoObject = await getCryptoIdFromName(cryptoId);
+        if (cryptoObject) {
             await setCachedData(getCacheKeySearchQuery(query), cryptoObject);
-            return cryptoObject ? cryptoObject : [];
+            return cryptoObject;
         }
 
         return [];
@@ -143,4 +149,3 @@ export async function searchQueryFromDB(query: string) {
         return [];
     }
 }
-

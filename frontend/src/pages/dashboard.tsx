@@ -1,69 +1,35 @@
-import { useState, useEffect, lazy, Suspense, useMemo } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import type { CryptoSummary } from '../types/crypto';
-import { useTopCryptos } from '../hooks/useTopCryptos';
-import { useCryptoHistoricData } from '../hooks/useCryptoHistoricData';
-import { DetailHeader } from './components/detail-header';
+import { useTopCryptos } from '../hooks/use-top-cryptos';
+import { useCryptoHistoricData } from '../hooks/use-crypto-historic-data';
+import { useAuth } from '../hooks/use-auth';
+import { useFavorites } from '../hooks/use-favorites';
+import { useSorting } from '../hooks/use-sorting';
+import { DetailHeader } from '../components/dashboard/detail-header';
+import { getTokenFromStorage } from '../services/auth.service';
 
 // Lazy load heavy components
 const DetailMetrics = lazy(() =>
-  import('./components/detail-metrics').then((module) => ({ default: module.DetailMetrics })),
+  import('../components/dashboard/detail-metrics').then((module) => ({ default: module.DetailMetrics })),
 );
 const DetailCharts = lazy(() =>
-  import('./components/detail-charts').then((module) => ({ default: module.DetailCharts })),
+  import('../components/dashboard/detail-charts').then((module) => ({ default: module.DetailCharts })),
 );
 const DetailRecentSnapshots = lazy(() =>
-  import('./components/detail-recent-snapshots').then((module) => ({
+  import('../components/dashboard/detail-recent-snapshots').then((module) => ({
     default: module.DetailRecentSnapshots,
   })),
 );
 
 const TOP_N = 10;
 
-type SortField = 'market_cap_rank' | 'market_cap' | 'current_price' | 'price_change_percentage_24h';
-type SortDirection = 'asc' | 'desc';
-
 export default function Dashboard() {
   const { cryptos, isLoading, error, retry } = useTopCryptos(TOP_N);
+  useAuth(); // Initialize auth
+  const { toggleFavorite, isFavorite } = useFavorites();
+  const { sortedCryptos, sortField, sortDirection, handleSort } = useSorting(cryptos);
   const [selectedCrypto, setSelectedCrypto] = useState<CryptoSummary | null>(null);
-  const [sortField, setSortField] = useState<SortField>('market_cap_rank');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-
-  // Sort cryptos based on selected field and direction
-  const sortedCryptos = useMemo(() => {
-    const sorted = [...cryptos];
-    sorted.sort((a, b) => {
-      let aValue: number;
-      let bValue: number;
-
-      switch (sortField) {
-        case 'market_cap_rank':
-          aValue = a.market_cap_rank;
-          bValue = b.market_cap_rank;
-          break;
-        case 'market_cap':
-          aValue = a.market_cap;
-          bValue = b.market_cap;
-          break;
-        case 'current_price':
-          aValue = a.current_price;
-          bValue = b.current_price;
-          break;
-        case 'price_change_percentage_24h':
-          aValue = a.price_change_percentage_24h;
-          bValue = b.price_change_percentage_24h;
-          break;
-        default:
-          return 0;
-      }
-
-      return sortDirection === 'asc'
-        ? aValue - bValue
-        : bValue - aValue;
-    });
-
-    return sorted;
-  }, [cryptos, sortField, sortDirection]);
 
   // Set first crypto as selected by default when cryptos load
   useEffect(() => {
@@ -72,20 +38,9 @@ export default function Dashboard() {
     }
   }, [cryptos, selectedCrypto]);
 
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      // Toggle direction if clicking the same field
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      // Set new field with appropriate default direction
-      // Market cap should default to descending (highest first)
-      // Rank should default to ascending (lower rank = better)
-      // Price and 24h% default to descending (highest first)
-      const defaultDirection: SortDirection = 
-        field === 'market_cap_rank' ? 'asc' : 'desc';
-      setSortField(field);
-      setSortDirection(defaultDirection);
-    }
+  const handleFavoriteClick = (e: React.MouseEvent, cryptoId: string) => {
+    e.stopPropagation(); // Prevent row click
+    toggleFavorite(cryptoId);
   };
 
   const {
@@ -209,12 +164,17 @@ export default function Dashboard() {
                       <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wider text-gray-400">
                         Volume
                       </th>
+                      <th className="px-3 py-2 text-center text-xs font-semibold uppercase tracking-wider text-gray-400 w-12">
+                        ♥
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {sortedCryptos.map((crypto) => {
                       const isSelected = selectedCrypto?.id === crypto.id;
                       const isPositive = crypto.price_change_percentage_24h >= 0;
+                      const cryptoIsFavorite = isFavorite(crypto.id);
+                      const token = getTokenFromStorage();
                       
                       return (
                         <tr
@@ -259,6 +219,23 @@ export default function Dashboard() {
                           </td>
                           <td className="px-3 py-3 text-right text-xs text-gray-400">
                             ${(crypto.total_volume / 1e6).toFixed(2)}M
+                          </td>
+                          <td className="px-3 py-3 text-center">
+                            {token ? (
+                              <button
+                                onClick={(e) => handleFavoriteClick(e, crypto.id)}
+                                className={`transition-transform hover:scale-110 ${
+                                  cryptoIsFavorite ? 'text-rose-500' : 'text-gray-500 hover:text-rose-400'
+                                }`}
+                                title={cryptoIsFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                              >
+                                {cryptoIsFavorite ? '♥' : '♡'}
+                              </button>
+                            ) : (
+                              <span className="text-gray-600" title="Login to favorite">
+                                ♡
+                              </span>
+                            )}
                           </td>
                         </tr>
                       );

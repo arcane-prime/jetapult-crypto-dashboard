@@ -31,7 +31,14 @@ export function useCryptoSearch(): UseCryptoSearchResult {
       }
 
       const data = await res.json();
-      setResponse(data);
+      // If backend returns empty array or null, treat it as no results
+      if (Array.isArray(data) && data.length === 0) {
+        setResponse(null);
+      } else if (!data || (typeof data === 'object' && Object.keys(data).length === 0)) {
+        setResponse(null);
+      } else {
+        setResponse(data);
+      }
     } catch (err) {
       let message = 'Failed to search';
       if (err instanceof Error) {

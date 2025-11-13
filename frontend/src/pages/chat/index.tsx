@@ -59,19 +59,42 @@ export default function ChatPage() {
     const queryText = query.trim();
     setQuery('');
 
-    // Add user message and loading state
+    // Check if query is clearly not about cryptocurrencies (greetings, general chat, etc.)
+    const isGreeting = /^(hi|hello|hey|greetings|good morning|good afternoon|good evening|how are you|what's up|sup)$/i.test(queryText.trim());
+    const isGeneralChat = /^(thanks|thank you|bye|goodbye|see you|ok|okay|yes|no|sure|maybe)$/i.test(queryText.trim());
+    
+    // Add user message
     const newMessage: Message = {
       id: Date.now().toString(),
       query: queryText,
       response: null,
-      isLoading: true,
+      isLoading: !isGreeting && !isGeneralChat, // Don't show loading for greetings
       error: null,
       showDetails: false,
     };
 
     setMessages((prev) => [...prev, newMessage]);
 
-    // Search
+    // Handle greetings and general chat immediately
+    if (isGreeting || isGeneralChat) {
+      // Update message immediately without API call
+      setTimeout(() => {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === newMessage.id
+              ? {
+                  ...msg,
+                  isLoading: false,
+                  response: null,
+                }
+              : msg
+          )
+        );
+      }, 100);
+      return;
+    }
+
+    // Search for crypto-related queries
     await search(queryText);
   };
 
@@ -83,14 +106,34 @@ export default function ChatPage() {
     return data !== null && 'prices' in data;
   };
 
-  const getChatAnswer = (response: SearchResponse): string => {
-    if (!response) {
+  const getChatAnswer = (response: SearchResponse, query: string): string => {
+    if (!response || (Array.isArray(response) && response.length === 0)) {
       return "I couldn't find any information for that query. Please try rephrasing your question.";
     }
 
     if (isPriceResponse(response)) {
+      const queryLower = query.toLowerCase();
       const changeText =
         response.price_change_percentage_24h >= 0 ? 'increased' : 'decreased';
+      
+      // Contextual responses based on query type
+      if (queryLower.includes('market cap') || queryLower.includes('marketcap')) {
+        return `${response.name} (${response.symbol.toUpperCase()}) has a market capitalization of $${(response.market_cap / 1e9).toFixed(2)}B, ranking it #${response.market_cap_rank} among all cryptocurrencies. The market cap has ${changeText} by ${Math.abs(response.market_cap_change_percentage_24h).toFixed(2)}% in the last 24 hours.`;
+      }
+      
+      if (queryLower.includes('volume') || queryLower.includes('trading')) {
+        return `The 24-hour trading volume for ${response.name} (${response.symbol.toUpperCase()}) is $${(response.total_volume / 1e6).toFixed(2)}M. The price ranged from $${response.low_24h.toLocaleString(undefined, { maximumFractionDigits: 6 })} (low) to $${response.high_24h.toLocaleString(undefined, { maximumFractionDigits: 6 })} (high) in the last 24 hours.`;
+      }
+      
+      if (queryLower.includes('rank') || queryLower.includes('ranking') || queryLower.includes('position')) {
+        return `${response.name} (${response.symbol.toUpperCase()}) is currently ranked #${response.market_cap_rank} by market capitalization with a market cap of $${(response.market_cap / 1e9).toFixed(2)}B.`;
+      }
+      
+      if (queryLower.includes('change') || queryLower.includes('24h')) {
+        return `Over the last 24 hours, ${response.name} (${response.symbol.toUpperCase()}) has ${changeText} by ${Math.abs(response.price_change_percentage_24h).toFixed(2)}% (${response.price_change_24h >= 0 ? '+' : ''}$${Math.abs(response.price_change_24h).toLocaleString(undefined, { maximumFractionDigits: 6 })}) to reach $${response.current_price.toLocaleString(undefined, { maximumFractionDigits: 6 })}.`;
+      }
+      
+      // Default price response
       return `This is the current price information for ${response.name} (${response.symbol.toUpperCase()}). The current price is $${response.current_price.toLocaleString(undefined, { maximumFractionDigits: 6 })}. Over the last 24 hours, the price has ${changeText} by ${Math.abs(response.price_change_percentage_24h).toFixed(2)}%. ${response.name} is currently ranked #${response.market_cap_rank} by market capitalization.`;
     }
 
@@ -133,7 +176,7 @@ export default function ChatPage() {
             <p className="mt-1 text-sm text-gray-400">Ask questions about cryptocurrencies</p>
           </div>
           <Link
-            to="/"
+            to="/dashboard"
             className="rounded-lg border border-gray-700 bg-gray-800/50 px-4 py-2 text-sm font-medium text-gray-300 transition hover:bg-gray-800 hover:text-white"
           >
             ← Back
@@ -149,8 +192,8 @@ export default function ChatPage() {
                 <div className="text-center">
                   <p className="text-lg text-gray-400">Start a conversation</p>
                   <p className="mt-2 text-sm text-gray-500">
-                    Try asking: "What is the price of Bitcoin?" or "Show me the 7-day trend of
-                    Ethereum"
+                    Try asking: "What is the price of Bitcoin?", "What is the market cap of Ethereum?", 
+                    "Show me the 7-day trend of Bitcoin", or "What is the 24h volume of Solana?"
                   </p>
                 </div>
               </div>
@@ -179,23 +222,37 @@ export default function ChatPage() {
                           </div>
                         )}
 
-                        {!message.isLoading && !message.error && message.response === null && (
-                          <p className="text-sm text-gray-400">
-                            No results found. Try rephrasing your question.
-                          </p>
-                        )}
-
-                        {!message.isLoading &&
-                          !message.error &&
-                          message.response !== null && (
+                        {!message.isLoading && !message.error && (
                             <div className="space-y-4">
                               {/* Chat Answer */}
-                              <p className="text-sm leading-relaxed text-gray-200">
-                                {getChatAnswer(message.response)}
-                              </p>
+                              {(message.response === null || (Array.isArray(message.response) && message.response.length === 0)) ? (
+                                <p className="text-sm leading-relaxed text-gray-200">
+                                  {(() => {
+                                    if (/^(hi|hello|hey|greetings|good morning|good afternoon|good evening)$/i.test(message.query.trim())) {
+                                      return `Hello! I'm a crypto assistant. I can help you with information about cryptocurrencies. Try asking: "What is the price of Bitcoin?" or "Show me the 7-day trend of Ethereum".`;
+                                    }
+                                    if (/^(how are you|what's up|sup)$/i.test(message.query.trim())) {
+                                      return `I'm doing well, thank you! I'm here to help you with cryptocurrency information. What would you like to know?`;
+                                    }
+                                    if (/^(thanks|thank you)$/i.test(message.query.trim())) {
+                                      return `You're welcome! Feel free to ask me anything about cryptocurrencies.`;
+                                    }
+                                    if (/^(bye|goodbye|see you)$/i.test(message.query.trim())) {
+                                      return `Goodbye! Feel free to come back anytime for crypto information.`;
+                                    }
+                                    return `I couldn't find any information for "${message.query}". Please check the spelling of the cryptocurrency name or try asking about price, market cap, volume, or trends. For example: "What is the price of Bitcoin?" or "Show me the 7-day trend of Ethereum".`;
+                                  })()}
+                                </p>
+                              ) : (
+                                <p className="text-sm leading-relaxed text-gray-200">
+                                  {getChatAnswer(message.response, message.query)}
+                                </p>
+                              )}
 
-                              {/* Show Details Toggle */}
-                              {!message.showDetails && (
+                              {/* Show Details Toggle - Only show if we have a valid response */}
+                              {message.response !== null && 
+                               !(Array.isArray(message.response) && message.response.length === 0) &&
+                               !message.showDetails && (
                                 <div className="flex items-center gap-3">
                                   <p className="text-xs text-gray-400">Would you like to see more details?</p>
                                   <div className="flex gap-2">
@@ -222,7 +279,9 @@ export default function ChatPage() {
                               )}
 
                               {/* Detailed Response */}
-                              {message.showDetails && (
+                              {message.showDetails && 
+                               message.response !== null && 
+                               !(Array.isArray(message.response) && message.response.length === 0) && (
                                 <div className="mt-4 border-t border-gray-700 pt-4">
                                   {isPriceResponse(message.response) && (
                                     <Suspense
